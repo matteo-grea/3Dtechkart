@@ -1,5 +1,6 @@
 # import necessary packages for hand gesture recognition project using Python OpenCV
 
+
 import cv2
 import numpy as np
 import mediapipe as mp
