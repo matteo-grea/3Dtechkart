@@ -23,9 +23,12 @@ print(classNames)
 # Initialize the webcam for Hand Gesture Recognition Python project
 cap = cv2.VideoCapture(0)
 
-while True:
+while cap.isOpened():
     # Read each frame from the webcam
-    _, frame = cap.read()
+    ret, frame = cap.read()
+    if not ret:
+        break
+
     x, y, c = frame.shape
 
     # Flip the frame vertically
@@ -53,6 +56,16 @@ while True:
         # Drawing landmarks on frames
         mpDraw.draw_landmarks(frame, handslms,
                               mpHands.HAND_CONNECTIONS)
+
+        # Predict gesture in Hand Gesture Recognition project
+        prediction = model.predict([landmarks])
+        print(prediction)
+        classID = np.argmax(prediction)
+        className = classNames[classID]
+
+        # show the prediction on the frame
+        cv2.putText(frame, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                    1, (0, 0, 255), 2, cv2.LINE_AA)
 
     # Show the final output
     cv2.imshow("Output", frame)
