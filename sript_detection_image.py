@@ -9,8 +9,7 @@ liste_image = []
 path_dir = "images"
 
 for image in os.listdir(path_dir):
-    rgb = cv2.cvtColor(cv2.imread(f"{path_dir}/{image}"), cv2.COLOR_BGR2RGB)
-    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    gray = cv2.cvtColor(cv2.imread(f"{path_dir}/{image}"), cv2.COLOR_BGR2GRAY)
     liste_image.append(gray)
 
 # use orb if sift is not installed
