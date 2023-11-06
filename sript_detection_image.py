@@ -5,7 +5,9 @@ import os
 liste_image = []
 path_dir = "images"
 
-for image in os.listdir(path_dir):
+images = os.listdir(path_dir)
+
+for image in images:
     gray = cv2.cvtColor(cv2.imread(f"{path_dir}/{image}"), cv2.COLOR_BGR2GRAY)
     liste_image.append(gray)
 
@@ -55,9 +57,10 @@ while True:
         if len(good_match) > MIN_MATCH_COUNT and len(good_match) > max_matches:
             max_matches = len(good_match)
             idx_max = i
-            print('good match: ' + str(i))
+            print(f"Good match for id: {i} with {len(good_match)} matches")
 
-    print(f"Best match: {idx_max}")
+    best_match = images[idx_max] if idx_max != -1 else "No image matched the current frame"
+    print(best_match)
 
     cv2.imshow("Ma caméra", frame)
     time.sleep(2)
