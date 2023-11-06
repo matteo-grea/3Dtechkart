@@ -53,7 +53,7 @@ while True:
             if m.distance < 0.7 * n.distance:
                 good_match.append(m)
 
-        # if less than 100 points matched -> not the same images or higly distorted
+        # if less than 150 points matched -> not the same images or higly distorted
         if len(good_match) > MIN_MATCH_COUNT and len(good_match) > max_matches:
             max_matches = len(good_match)
             idx_max = i
