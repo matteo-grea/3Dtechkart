@@ -39,8 +39,8 @@ while True:
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
 
-    MIN_MATCH_COUNT = 100
-    max_matches, idx_max = 0, 0
+    MIN_MATCH_COUNT = 150
+    max_matches, idx_max = 0, -1
     for i, desc in enumerate(liste_desc):
         kp_r, desc_r = feature_extractor.detectAndCompute(gray, None)
         matches = bf.knnMatch(desc, desc_r, k=2)
