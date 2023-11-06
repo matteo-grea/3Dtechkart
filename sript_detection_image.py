@@ -3,11 +3,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import time
+import os
 
 liste_image = []
-rgb = cv2.cvtColor(cv2.imread("test_im.png"), cv2.COLOR_BGR2RGB)
-gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
-liste_image.append(gray)
+path_dir = "images"
+
+for image in os.listdir(path_dir):
+    rgb = cv2.cvtColor(cv2.imread(f"{path_dir}/{image}"), cv2.COLOR_BGR2RGB)
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+    liste_image.append(gray)
 
 # use orb if sift is not installed
 feature_extractor = cv2.xfeatures2d.SIFT_create()
