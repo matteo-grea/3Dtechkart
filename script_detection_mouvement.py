@@ -36,27 +36,27 @@ while cap.isOpened():
     frame = cv2.flip(frame, 1)
 
     # Get frame in RGB (OpenCV uses BGR)
-    framergb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     # Get hand landmark prediction
-    result = hands.process(framergb)
+    result = hands.process(frame_rgb)
 
     className = ''
 
     # post process the result
     if result.multi_hand_landmarks:
         landmarks = []
-        for handslms in result.multi_hand_landmarks:
-            for lm in handslms.landmark:
+        for hands_lms in result.multi_hand_landmarks:
+            for lm in hands_lms.landmark:
                 # print(id, lm)
                 lmx = int(lm.x * x)
                 lmy = int(lm.y * y)
 
                 landmarks.append([lmx, lmy])
 
-        # Drawing landmarks on frames
-        mpDraw.draw_landmarks(frame, handslms,
-                              mpHands.HAND_CONNECTIONS)
+            # Drawing landmarks on frames
+            mpDraw.draw_landmarks(frame, hands_lms,
+                                  mpHands.HAND_CONNECTIONS)
 
         # Predict gesture in Hand Gesture Recognition project
         prediction = model.predict([landmarks])

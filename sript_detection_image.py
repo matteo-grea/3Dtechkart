@@ -1,6 +1,3 @@
-from random import randrange
-import matplotlib.pyplot as plt
-import numpy as np
 import cv2
 import time
 import os
@@ -17,7 +14,7 @@ feature_extractor = cv2.xfeatures2d.SIFT_create()
 
 # find the keypoints and descriptors with chosen feature_extractor
 liste_desc = []
-for i in liste_image :
+for i in liste_image:
     kp, desc = feature_extractor.detectAndCompute(i, None)
     liste_desc.append(desc)
 
@@ -39,12 +36,12 @@ while True:
         print("Erreur: Impossible de lire la trame vidéo")
         break
 
-
-
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)   
+    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
 
-    for i, desc in enumerate(liste_desc) :
+    MIN_MATCH_COUNT = 100
+    max_matches, idx_max = 0, 0
+    for i, desc in enumerate(liste_desc):
         kp_r, desc_r = feature_extractor.detectAndCompute(gray, None)
         matches = bf.knnMatch(desc, desc_r, k=2)
 
@@ -54,12 +51,13 @@ while True:
             if m.distance < 0.7 * n.distance:
                 good_match.append(m)
 
-        # if less then 10 points matched -> not the same images or higly distorted
-        MIN_MATCH_COUNT = 100
-        if len(good_match) > MIN_MATCH_COUNT:
-            print('image detecte '+ str(i))
+        # if less than 100 points matched -> not the same images or higly distorted
+        if len(good_match) > MIN_MATCH_COUNT and len(good_match) > max_matches:
+            max_matches = len(good_match)
+            idx_max = i
+            print('good match: ' + str(i))
 
-
+    print(f"Best match: {idx_max}")
 
     cv2.imshow("Ma caméra", frame)
     time.sleep(2)
