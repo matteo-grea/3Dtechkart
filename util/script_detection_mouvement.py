@@ -8,7 +8,8 @@ from tensorflow.keras.models import load_model
 
 
 class MediaPipeRecognizer:
-    def __init__(self, model_path: str, class_names_path: str):
+    def __init__(self, model_path: str, class_names_path: str, camera_index: int):
+        self.camera_index = camera_index
         # initialize mediapipe
         self.mpHands = mp.solutions.hands
         self.hands = self.mpHands.Hands(max_num_hands=1, min_detection_confidence=0.7)
@@ -19,7 +20,7 @@ class MediaPipeRecognizer:
 
     def recognize_camera_feed(self):
         # Initialize the webcam for Hand Gesture Recognition Python project
-        cap = cv2.VideoCapture(0)
+        cap = cv2.VideoCapture(self.camera_index)
 
         while cap.isOpened():
             # Read each frame from the webcam

@@ -10,17 +10,27 @@
 
 import UdpComms as U
 from util.script_detection_mouvement import MediaPipeRecognizer as MPR
+from util.sript_detection_image import SIFTRecognizer
 import time
 import cv2
 
+# Paramètres du modèle MediaPipe
 model_path = "mp_hand_gesture"
 class_names_path = "gesture.names"
 
 # Charger le modèle MediaPipe
-recognizer = MPR(model_path, class_names_path)
+recognizer = MPR(model_path, class_names_path, 0)
 
-# Create UDP socket to use for sending (and receiving)
-sock = U.UdpComms(udpIP="127.0.0.1", portTX=8000, portRX=8001, enableRX=True, suppressWarnings=True)
+# Charger le reconnaisseur SIFT pour le changement de modèle
+images_path = "images"
+min_match_count = 150
+sift_recognizer = SIFTRecognizer(images_path, min_match_count, 1)
 
-for class_name in recognizer.recognize_camera_feed():
-    sock.SendData(class_name)
+
+# Create UDP sockets to use for sending (and receiving), one sock for each script
+sock_movement = U.UdpComms(udpIP="127.0.0.1", portTX=8000, portRX=8001, enableRX=True, suppressWarnings=True)
+sock_image = U.UdpComms(udpIP="127.0.0.1", portTX=8002, portRX=8003, enableRX=True, suppressWarnings=True)
+
+for class_name, image in zip(recognizer.recognize_camera_feed(), sift_recognizer.recognize_camera_feed()):
+    sock_movement.SendData(class_name)
+    sock_image.SendData(image)

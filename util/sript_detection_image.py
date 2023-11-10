@@ -2,74 +2,76 @@ import cv2
 import time
 import os
 
-liste_image = []
-path_dir = "../images"
 
-images = os.listdir(path_dir)
+class SIFTRecognizer:
+    def __init__(self, images_path, min_match_count, camera_index):
+        self.camera_index = camera_index
+        self.min_match_count = min_match_count
+        self.images_names = []
+        self.images = []
+        for image in os.listdir(images_path):
+            gray = cv2.cvtColor(cv2.imread(f"{images_path}/{image}"), cv2.COLOR_BGR2GRAY)
+            self.images.append(gray)
+            self.images_names.append(image[:-4])
+        # use orb if sift is not installed
+        self.feature_extractor = cv2.xfeatures2d.SIFT_create()
 
-for image in images:
-    gray = cv2.cvtColor(cv2.imread(f"{path_dir}/{image}"), cv2.COLOR_BGR2GRAY)
-    liste_image.append(gray)
+        # Get the images descriptors
+        self.images_desc = []
+        for i in self.images:
+            kp, desc = self.feature_extractor.detectAndCompute(i, None)
+            self.images_desc.append(desc)
+        self.bf = cv2.BFMatcher()
 
-# use orb if sift is not installed
-feature_extractor = cv2.xfeatures2d.SIFT_create()
+    def recognize_camera_feed(self):
+        cap = cv2.VideoCapture(self.camera_index)
 
-# find the keypoints and descriptors with chosen feature_extractor
-liste_desc = []
-for i in liste_image:
-    kp, desc = feature_extractor.detectAndCompute(i, None)
-    liste_desc.append(desc)
+        # Vérifier si la capture vidéo est ouverte
+        if not cap.isOpened():
+            print("Erreur: La caméra n'est pas disponible")
+            exit()
 
-bf = cv2.BFMatcher()
-# Ouvrir la capture vidéo à partir de la première caméra (index 0)
-cap = cv2.VideoCapture(0)
+        while True:
+            # Lire un cadre vidéo
+            ret, frame = cap.read()
 
-# Vérifier si la capture vidéo est ouverte
-if not cap.isOpened():
-    print("Erreur: La caméra n'est pas disponible")
-    exit()
+            # Vérifier si la lecture s'est bien déroulée
+            if not ret:
+                print("Erreur: Impossible de lire la trame vidéo")
+                break
 
-while True:
-    # Lire un cadre vidéo
-    ret, frame = cap.read()
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
 
-    # Vérifier si la lecture s'est bien déroulée
-    if not ret:
-        print("Erreur: Impossible de lire la trame vidéo")
-        break
+            max_matches, idx_max = 0, -1
+            for i, desc in enumerate(self.images_desc):
+                kp_r, desc_r = self.feature_extractor.detectAndCompute(gray, None)
+                matches = self.bf.knnMatch(desc, desc_r, k=2)
 
-    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
+                # store all the good matches as per Lowe's ratio test.
+                good_match = []
+                for m, n in matches:
+                    if m.distance < 0.7 * n.distance:
+                        good_match.append(m)
 
-    MIN_MATCH_COUNT = 150
-    max_matches, idx_max = 0, -1
-    for i, desc in enumerate(liste_desc):
-        kp_r, desc_r = feature_extractor.detectAndCompute(gray, None)
-        matches = bf.knnMatch(desc, desc_r, k=2)
+                # if less than 150 points matched -> not the same images or higly distorted
+                if len(good_match) > self.min_match_count and len(good_match) > max_matches:
+                    max_matches = len(good_match)
+                    idx_max = i
+                    print(f"Good match for id: {i} with {len(good_match)} matches")
 
-        # store all the good matches as per Lowe's ratio test.
-        good_match = []
-        for m, n in matches:
-            if m.distance < 0.7 * n.distance:
-                good_match.append(m)
+            best_match = self.images_names[idx_max] if idx_max != -1 else "No image matched the current frame"
+            if idx_max != -1:
+                yield best_match
 
-        # if less than 150 points matched -> not the same images or higly distorted
-        if len(good_match) > MIN_MATCH_COUNT and len(good_match) > max_matches:
-            max_matches = len(good_match)
-            idx_max = i
-            print(f"Good match for id: {i} with {len(good_match)} matches")
+            cv2.imshow("Ma caméra", frame)
+            time.sleep(2)
 
-    best_match = images[idx_max] if idx_max != -1 else "No image matched the current frame"
-    print(best_match)
+            # Appuyez sur la touche 'q' pour quitter
+            key = cv2.waitKey(1)
+            if key & 0xFF == ord('q'):
+                break
 
-    cv2.imshow("Ma caméra", frame)
-    time.sleep(2)
-
-    # Appuyez sur la touche 'q' pour quitter
-    key = cv2.waitKey(1)
-    if key & 0xFF == ord('q'):
-        break
-
-# Libérer la capture vidéo et détruire toutes les fenêtres
-cap.release()
-cv2.destroyAllWindows()
+        # Libérer la capture vidéo et détruire toutes les fenêtres
+        cap.release()
+        cv2.destroyAllWindows()
