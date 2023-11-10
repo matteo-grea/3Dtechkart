@@ -3,7 +3,7 @@ import time
 import os
 
 liste_image = []
-path_dir = "images"
+path_dir = "../images"
 
 images = os.listdir(path_dir)
 
