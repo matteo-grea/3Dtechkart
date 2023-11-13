@@ -31,7 +31,7 @@ sift_recognizer = SIFTRecognizer(images_path, min_match_count)
 sock_movement = U.UdpComms(udpIP="127.0.0.1", portTX=8000, portRX=8001, enableRX=True, suppressWarnings=True)
 sock_image = U.UdpComms(udpIP="127.0.0.1", portTX=8002, portRX=8003, enableRX=True, suppressWarnings=True)
 
-# Send data to Unity
+# Get camera feed
 cap = cv2.VideoCapture(0)
 
 while cap.isOpened():
@@ -46,6 +46,7 @@ while cap.isOpened():
     thread_movement = threading.Thread(target=recognizer.recognize_frame, args=(frame, sock_movement, queue,))
     thread_image = threading.Thread(target=sift_recognizer.recognize_frame, args=(frame, sock_image,))
 
+    # Execute the recognize_frame methods from the models and send them to Unity
     thread_movement.start()
     thread_image.start()
 
@@ -53,6 +54,7 @@ while cap.isOpened():
     thread_movement.join()
     thread_image.join()
 
+    # Show the frame received from recognizer.recognize_frame stored in queue
     cv2.imshow("Output", queue[0])
 
     if cv2.waitKey(1) == ord('q'):
