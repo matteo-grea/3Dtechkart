@@ -78,7 +78,7 @@ class MediaPipeRecognizer:
         cap.release()
         cv2.destroyAllWindows()
 
-    def recognize_frame(self, frame):
+    def recognize_frame(self, frame, sock, queue):
         x, y, c = frame.shape
 
         # Flip the frame vertically
@@ -115,4 +115,6 @@ class MediaPipeRecognizer:
             # show the prediction on the frame
             cv2.putText(frame, class_name, (10, 50), cv2.FONT_HERSHEY_SIMPLEX,
                         1, (0, 0, 255), 2, cv2.LINE_AA)
-        return class_name
+        sock.SendData(class_name)
+        queue.append(frame)
+        #return class_name, frame

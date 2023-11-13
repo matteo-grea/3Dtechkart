@@ -9,8 +9,8 @@
 # Example of a Python UDP server
 
 import UdpComms as U
-import time
 import cv2
+import threading
 from util.script_detection_mouvement import MediaPipeRecognizer as MPR
 from util.sript_detection_image import SIFTRecognizer
 
@@ -39,16 +39,22 @@ while cap.isOpened():
     if not ret:
         break
 
-    movement = recognizer.recognize_frame(frame)
-    image = sift_recognizer.recognize_frame(frame)
+    # Initialize a queue to get the frame to show
+    queue = []
 
-    try:
-        sock_movement.SendData(movement)
-        sock_image.SendData(image)
-    except Exception as e:
-        print(f"Error: {e}")
+    # Initialize threads
+    thread_movement = threading.Thread(target=recognizer.recognize_frame, args=(frame, sock_movement, queue,))
+    thread_image = threading.Thread(target=sift_recognizer.recognize_frame, args=(frame, sock_image,))
 
-    cv2.imshow("Output", frame)
+    thread_movement.start()
+    thread_image.start()
+
+    # Wait for both threads to finish executing
+    thread_movement.join()
+    thread_image.join()
+
+    cv2.imshow("Output", queue[0])
+
     if cv2.waitKey(1) == ord('q'):
         break
 

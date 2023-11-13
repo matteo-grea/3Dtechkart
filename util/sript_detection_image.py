@@ -23,7 +23,7 @@ class SIFTRecognizer:
             self.images_desc.append(desc)
         self.bf = cv2.BFMatcher()
 
-    def recognize_frame(self, frame):
+    def recognize_frame(self, frame, sock):
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
 
@@ -45,4 +45,5 @@ class SIFTRecognizer:
                 print(f"Good match for id: {i} with {len(good_match)} matches")
 
         best_match = self.images_names[idx_max] if idx_max != -1 else ""
-        return best_match if type(best_match) == "string" else ""
+        sock.SendData(best_match)
+        #return best_match
