@@ -4,8 +4,7 @@ import os
 
 
 class SIFTRecognizer:
-    def __init__(self, images_path, min_match_count, camera_index):
-        self.camera_index = camera_index
+    def __init__(self, images_path, min_match_count):
         self.min_match_count = min_match_count
         self.images_names = []
         self.images = []

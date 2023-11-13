@@ -19,12 +19,12 @@ model_path = "mp_hand_gesture"
 class_names_path = "gesture.names"
 
 # Charger le modèle MediaPipe
-recognizer = MPR(model_path, class_names_path, 0)
+recognizer = MPR(model_path, class_names_path)
 
 # Charger le reconnaisseur SIFT pour le changement de modèle
 images_path = "images"
 min_match_count = 150
-sift_recognizer = SIFTRecognizer(images_path, min_match_count, 1)
+sift_recognizer = SIFTRecognizer(images_path, min_match_count)
 
 
 # Create UDP sockets to use for sending (and receiving), one sock for each script
