@@ -23,55 +23,26 @@ class SIFTRecognizer:
             self.images_desc.append(desc)
         self.bf = cv2.BFMatcher()
 
-    def recognize_camera_feed(self):
-        cap = cv2.VideoCapture(self.camera_index)
+    def recognize_frame(self, frame):
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
 
-        # Vérifier si la capture vidéo est ouverte
-        if not cap.isOpened():
-            print("Erreur: La caméra n'est pas disponible")
-            exit()
+        max_matches, idx_max = 0, -1
+        for i, desc in enumerate(self.images_desc):
+            kp_r, desc_r = self.feature_extractor.detectAndCompute(gray, None)
+            matches = self.bf.knnMatch(desc, desc_r, k=2)
 
-        while True:
-            # Lire un cadre vidéo
-            ret, frame = cap.read()
+            # store all the good matches as per Lowe's ratio test.
+            good_match = []
+            for m, n in matches:
+                if m.distance < 0.7 * n.distance:
+                    good_match.append(m)
 
-            # Vérifier si la lecture s'est bien déroulée
-            if not ret:
-                print("Erreur: Impossible de lire la trame vidéo")
-                break
+            # if less than 150 points matched -> not the same images or highly distorted
+            if len(good_match) > self.min_match_count and len(good_match) > max_matches:
+                max_matches = len(good_match)
+                idx_max = i
+                print(f"Good match for id: {i} with {len(good_match)} matches")
 
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY)
-
-            max_matches, idx_max = 0, -1
-            for i, desc in enumerate(self.images_desc):
-                kp_r, desc_r = self.feature_extractor.detectAndCompute(gray, None)
-                matches = self.bf.knnMatch(desc, desc_r, k=2)
-
-                # store all the good matches as per Lowe's ratio test.
-                good_match = []
-                for m, n in matches:
-                    if m.distance < 0.7 * n.distance:
-                        good_match.append(m)
-
-                # if less than 150 points matched -> not the same images or higly distorted
-                if len(good_match) > self.min_match_count and len(good_match) > max_matches:
-                    max_matches = len(good_match)
-                    idx_max = i
-                    print(f"Good match for id: {i} with {len(good_match)} matches")
-
-            best_match = self.images_names[idx_max] if idx_max != -1 else "No image matched the current frame"
-            if idx_max != -1:
-                yield best_match
-
-            cv2.imshow("Ma caméra", frame)
-            time.sleep(2)
-
-            # Appuyez sur la touche 'q' pour quitter
-            key = cv2.waitKey(1)
-            if key & 0xFF == ord('q'):
-                break
-
-        # Libérer la capture vidéo et détruire toutes les fenêtres
-        cap.release()
-        cv2.destroyAllWindows()
+        best_match = self.images_names[idx_max] if idx_max != -1 else ""
+        return best_match if type(best_match) == "string" else ""

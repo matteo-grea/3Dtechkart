@@ -9,10 +9,10 @@
 # Example of a Python UDP server
 
 import UdpComms as U
-from util.script_detection_mouvement import MediaPipeRecognizer as MPR
-from util.sript_detection_image import SIFTRecognizer
 import time
 import cv2
+from util.script_detection_mouvement import MediaPipeRecognizer as MPR
+from util.sript_detection_image import SIFTRecognizer
 
 # Paramètres du modèle MediaPipe
 model_path = "mp_hand_gesture"
@@ -31,6 +31,27 @@ sift_recognizer = SIFTRecognizer(images_path, min_match_count, 1)
 sock_movement = U.UdpComms(udpIP="127.0.0.1", portTX=8000, portRX=8001, enableRX=True, suppressWarnings=True)
 sock_image = U.UdpComms(udpIP="127.0.0.1", portTX=8002, portRX=8003, enableRX=True, suppressWarnings=True)
 
-for class_name, image in zip(recognizer.recognize_camera_feed(), sift_recognizer.recognize_camera_feed()):
-    sock_movement.SendData(class_name)
-    sock_image.SendData(image)
+# Send data to Unity
+cap = cv2.VideoCapture(0)
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    movement = recognizer.recognize_frame(frame)
+    image = sift_recognizer.recognize_frame(frame)
+
+    try:
+        sock_movement.SendData(movement)
+        sock_image.SendData(image)
+    except Exception as e:
+        print(f"Error: {e}")
+
+    cv2.imshow("Output", frame)
+    if cv2.waitKey(1) == ord('q'):
+        break
+
+# release the webcam and destroy all active windows
+cap.release()
+cv2.destroyAllWindows()

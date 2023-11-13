@@ -4,6 +4,7 @@
 import cv2
 import numpy as np
 import mediapipe as mp
+import time
 from tensorflow.keras.models import load_model
 
 
@@ -58,7 +59,6 @@ class MediaPipeRecognizer:
 
                 # Predict gesture in Hand Gesture Recognition project
                 prediction = self.model.predict([landmarks])
-                print(prediction)
                 class_id = np.argmax(prediction)
                 class_name = self.class_names[class_id]
 
@@ -66,6 +66,8 @@ class MediaPipeRecognizer:
                 cv2.putText(frame, className, (10, 50), cv2.FONT_HERSHEY_SIMPLEX,
                             1, (0, 0, 255), 2, cv2.LINE_AA)
                 yield class_name
+
+            time.sleep(0.5)
 
             # Show the final output
             cv2.imshow("Output", frame)
@@ -75,3 +77,42 @@ class MediaPipeRecognizer:
         # release the webcam and destroy all active windows
         cap.release()
         cv2.destroyAllWindows()
+
+    def recognize_frame(self, frame):
+        x, y, c = frame.shape
+
+        # Flip the frame vertically
+        frame = cv2.flip(frame, 1)
+
+        # Get frame in RGB (OpenCV uses BGR)
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        # Get hand landmark prediction
+        result = self.hands.process(frame_rgb)
+
+        class_name = ''
+
+        # post process the result
+        if result.multi_hand_landmarks:
+            landmarks = []
+            for hands_lms in result.multi_hand_landmarks:
+                for lm in hands_lms.landmark:
+                    # print(id, lm)
+                    lmx = int(lm.x * x)
+                    lmy = int(lm.y * y)
+
+                    landmarks.append([lmx, lmy])
+
+                # Drawing landmarks on frames
+                self.mpDraw.draw_landmarks(frame, hands_lms,
+                                           self.mpHands.HAND_CONNECTIONS)
+
+            # Predict gesture in Hand Gesture Recognition project
+            prediction = self.model.predict([landmarks])
+            class_id = np.argmax(prediction)
+            class_name = self.class_names[class_id]
+
+            # show the prediction on the frame
+            cv2.putText(frame, class_name, (10, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                        1, (0, 0, 255), 2, cv2.LINE_AA)
+        return class_name
